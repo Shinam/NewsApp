@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">NewsApp</string>
+    <string name="title">Title : </string>
+    <string name="section">Section : </string>
+    <string name="noNew">No new found.</string>
+    <string name="loading">Loading...</string>
+</resources>

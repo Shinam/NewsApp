@@ -131,8 +131,13 @@ public class Utils {
                     if (properties.has("sectionName")) {
                         author = properties.getString("sectionName");
                     }
+                    String weburl = "";
+                    if(properties.has("webUrl"))
+                    {
+                        weburl = properties.getString("webUrl");
+                    }
 
-                    News enews = new News(title, author);
+                    News enews = new News(title, author, weburl);
                     news.add(enews);
                 }
             return news;

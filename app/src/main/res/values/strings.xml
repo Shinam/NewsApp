@@ -4,4 +4,6 @@
     <string name="section">Section : </string>
     <string name="noNew">No new found.</string>
     <string name="loading">Loading...</string>
+    <string name="noInternet">No internet connection</string>
+    <string name="updated">News are updated</string>
 </resources>

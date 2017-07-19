@@ -1,24 +1,33 @@
 package com.example.android.newsapp;
 
 import android.app.LoaderManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<News>>, SwipeRefreshLayout.OnRefreshListener {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<News>> {
     private static final String USGS_REQUEST_URL =
             "https://content.guardianapis.com/search?api-key=test";
     private ListView newsListView;
     private TextView mEmptyStateTextView;
     public static List<News> mListNews;
-    private static final int NEWS_LOADER_ID = 1;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
     private NewsAdapter mAdapter;
@@ -36,23 +45,76 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mListNews = new ArrayList<News>();
         mAdapter = new NewsAdapter(this, 0, mListNews);
 
-        final LoaderManager loaderManager = getLoaderManager();
-        loaderManager.initLoader(NEWS_LOADER_ID, null, this);
-
-        final NewsAsyncTask task = new NewsAsyncTask();
-        task.execute(USGS_REQUEST_URL);
+        if(checkNetworkConnection()) {
+            final NewsAsyncTask task = new NewsAsyncTask();
+            task.execute(USGS_REQUEST_URL);
+        }
+        else
+        {
+            mEmptyStateTextView.setText(R.string.noInternet);
+        }
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout.setEnabled(false);
 
-        mSwipeRefreshLayout.setOnRefreshListener(this);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                mSwipeRefreshLayout.setRefreshing(true);
+                ( new Handler()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(checkNetworkConnection()) {
+                            final NewsAsyncTask task = new NewsAsyncTask();
+                            task.execute(USGS_REQUEST_URL);
+                            Toast.makeText(MainActivity.this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
+                        }
+                        else
+                        {
+                            Toast.makeText(MainActivity.this, getString(R.string.noInternet), Toast.LENGTH_SHORT).show();
+                        }
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
+                }, 3000);
+            }
+        });
+
+        newsListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView absListView, int i) {
+            }
+
+            @Override
+            public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem == 0)
+                    mSwipeRefreshLayout.setEnabled(true);
+                else
+                    mSwipeRefreshLayout.setEnabled(false);
+            }
+        });
+
+        newsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                News currentNews = mAdapter.getItem(position);
+                // Convert the String URL into a URI object (to pass into the Intent constructor)
+                Uri newsUri = Uri.parse(currentNews.getWeb());
+
+                // Create a new intent to view the earthquake URI
+                Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
+
+                // Send the intent to launch a new activity
+                startActivity(websiteIntent);
+            }
+        });
     }
 
     private void updateUi(List<News> book) {
         newsListView = (ListView) findViewById(R.id.list);
 
-        NewsAdapter adapter = new NewsAdapter(MainActivity.this, 0, book);
+        mAdapter = new NewsAdapter(MainActivity.this, 0, book);
 
-        newsListView.setAdapter(adapter);
+        newsListView.setAdapter(mAdapter);
     }
 
     private class NewsAsyncTask extends AsyncTask<String, Void, List<News>> {
@@ -73,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 return;
             }
             updateUi(result);
+            mSwipeRefreshLayout.setRefreshing(false);
         }
     }
 
@@ -85,13 +148,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public void onLoadFinished(Loader<List<News>> loader, List<News> news) {
         mEmptyStateTextView.setText(R.string.loading);
         mAdapter.clear();
-
-        mSwipeRefreshLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                mSwipeRefreshLayout.setRefreshing(false);
-            }
-        });
 
         if (news != null && !news.isEmpty()) {
             mAdapter.addAll(news);
@@ -107,9 +163,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter.clear();
     }
 
-    @Override
-    public void onRefresh() {
-        MainActivity.this.getSupportLoaderManager().restartLoader(0, null, this);
+    public boolean checkNetworkConnection() {
+        ConnectivityManager cm =
+                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnected();
+        return isConnected;
     }
 
 }

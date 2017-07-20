@@ -14,10 +14,6 @@ public class News {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     public String getSection() {
         return section;
     }
@@ -25,15 +21,7 @@ public class News {
     public String getWeb() {
         return web;
     }
-
-    public void setWeb(String web) {
-        this.web = web;
-    }
-
-    public void setSection(String section) {
-        this.section = section;
-    }
-
+    
     public News(String title, String section, String web) {
         this.title = title;
         this.section = section;

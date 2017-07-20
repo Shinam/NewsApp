@@ -7,7 +7,6 @@ import android.content.Loader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -30,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public static List<News> mListNews;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private static final int NEWS_LOADER_ID = 1;
-
+    private LoaderManager loaderManager;
 
     private NewsAdapter mAdapter;
 
@@ -47,12 +46,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mListNews = new ArrayList<News>();
         mAdapter = new NewsAdapter(this, 0, mListNews);
 
-        LoaderManager loaderManager = getLoaderManager();
-        loaderManager.initLoader(NEWS_LOADER_ID, null, this);
-
         if (checkNetworkConnection()) {
-            final NewsAsyncTask task = new NewsAsyncTask();
-            task.execute(USGS_REQUEST_URL);
+            mEmptyStateTextView.setText(R.string.loading);
+            loaderManager = getLoaderManager();
+            loaderManager.initLoader(NEWS_LOADER_ID, null, this);
         } else {
             mEmptyStateTextView.setText(R.string.noInternet);
         }
@@ -68,8 +65,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                     @Override
                     public void run() {
                         if (checkNetworkConnection()) {
-                            final NewsAsyncTask task = new NewsAsyncTask();
-                            task.execute(USGS_REQUEST_URL);
+                            loaderManager.restartLoader(NEWS_LOADER_ID, null, MainActivity.this);
                             Toast.makeText(MainActivity.this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(MainActivity.this, getString(R.string.noInternet), Toast.LENGTH_SHORT).show();
@@ -105,7 +101,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 Intent websiteIntent = new Intent(Intent.ACTION_VIEW, newsUri);
 
                 // Send the intent to launch a new activity
-                startActivity(websiteIntent);
+                if (websiteIntent.resolveActivity(getPackageManager()) != null) {
+
+                    startActivity(websiteIntent);  //where intent is your intent
+
+                }
             }
         });
     }
@@ -116,28 +116,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter = new NewsAdapter(MainActivity.this, 0, book);
 
         newsListView.setAdapter(mAdapter);
-    }
-
-    private class NewsAsyncTask extends AsyncTask<String, Void, List<News>> {
-        @Override
-        protected List<News> doInBackground(String... urls) {
-            if (urls.length < 1 || urls[0] == null) {
-                return null;
-            }
-            List<News> result = Utils.fetchNewsData(urls[0]);
-
-            return result;
-        }
-
-        @Override
-        protected void onPostExecute(List<News> result) {
-            if (result == null) {
-                mEmptyStateTextView.setText(R.string.noNew);
-                return;
-            }
-            updateUi(result);
-            mSwipeRefreshLayout.setRefreshing(false);
-        }
     }
 
     @Override
@@ -151,7 +129,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mAdapter.clear();
 
         if (news != null && !news.isEmpty()) {
-            mAdapter.addAll(news);
+            //mAdapter.addAll(news);
+            updateUi(news);
         } else {
             mEmptyStateTextView.setText(R.string.noNew);
         }

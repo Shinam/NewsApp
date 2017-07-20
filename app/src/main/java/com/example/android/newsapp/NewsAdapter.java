@@ -22,7 +22,7 @@ import butterknife.ButterKnife;
  * Created by Shinam on 18/07/2017.
  */
 
-public class NewsAdapter extends ArrayAdapter<News>{
+public class NewsAdapter extends ArrayAdapter<News> {
 
     public NewsAdapter(@NonNull Context context, @LayoutRes int resource, @NonNull List<News> objects) {
         super(context, resource, objects);
@@ -30,12 +30,11 @@ public class NewsAdapter extends ArrayAdapter<News>{
 
     @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent){
+    public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
         if (convertView != null) {
             holder = (ViewHolder) convertView.getTag();
-        }
-        else {
+        } else {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item, parent, false);
             holder = new ViewHolder((convertView));
             convertView.setTag(holder);

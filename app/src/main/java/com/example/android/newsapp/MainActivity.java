@@ -29,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private TextView mEmptyStateTextView;
     public static List<News> mListNews;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private static final int NEWS_LOADER_ID = 1;
+
 
     private NewsAdapter mAdapter;
 
@@ -45,12 +47,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mListNews = new ArrayList<News>();
         mAdapter = new NewsAdapter(this, 0, mListNews);
 
-        if(checkNetworkConnection()) {
+        LoaderManager loaderManager = getLoaderManager();
+        loaderManager.initLoader(NEWS_LOADER_ID, null, this);
+
+        if (checkNetworkConnection()) {
             final NewsAsyncTask task = new NewsAsyncTask();
             task.execute(USGS_REQUEST_URL);
-        }
-        else
-        {
+        } else {
             mEmptyStateTextView.setText(R.string.noInternet);
         }
 
@@ -61,16 +64,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onRefresh() {
                 mSwipeRefreshLayout.setRefreshing(true);
-                ( new Handler()).postDelayed(new Runnable() {
+                (new Handler()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if(checkNetworkConnection()) {
+                        if (checkNetworkConnection()) {
                             final NewsAsyncTask task = new NewsAsyncTask();
                             task.execute(USGS_REQUEST_URL);
                             Toast.makeText(MainActivity.this, getString(R.string.updated), Toast.LENGTH_SHORT).show();
-                        }
-                        else
-                        {
+                        } else {
                             Toast.makeText(MainActivity.this, getString(R.string.noInternet), Toast.LENGTH_SHORT).show();
                         }
                         mSwipeRefreshLayout.setRefreshing(false);
@@ -151,9 +152,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         if (news != null && !news.isEmpty()) {
             mAdapter.addAll(news);
-        }
-        else
-        {
+        } else {
             mEmptyStateTextView.setText(R.string.noNew);
         }
     }

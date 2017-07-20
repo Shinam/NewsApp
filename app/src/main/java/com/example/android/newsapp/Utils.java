@@ -113,33 +113,31 @@ public class Utils {
                 return null;
             }
             JSONObject jsonResults = baseJsonResponse.getJSONObject("response");
-            if(!jsonResults.has("results"))
-            {
+            if (!jsonResults.has("results")) {
                 return null;
             }
             JSONArray itemArray = jsonResults.getJSONArray("results");
 
-                for (int i = 0; i < itemArray.length(); i++) {
-                    JSONObject properties = itemArray.getJSONObject(i);
+            for (int i = 0; i < itemArray.length(); i++) {
+                JSONObject properties = itemArray.getJSONObject(i);
 
-                    //Can't getString from string.xml without context
-                    String title = "no title";
-                    if (properties.has("webTitle")) {
-                        title = properties.getString("webTitle");
-                    }
-                    String author = "no section";
-                    if (properties.has("sectionName")) {
-                        author = properties.getString("sectionName");
-                    }
-                    String weburl = "";
-                    if(properties.has("webUrl"))
-                    {
-                        weburl = properties.getString("webUrl");
-                    }
-
-                    News enews = new News(title, author, weburl);
-                    news.add(enews);
+                //Can't getString from string.xml without context
+                String title = "no title";
+                if (properties.has("webTitle")) {
+                    title = properties.getString("webTitle");
                 }
+                String author = "no section";
+                if (properties.has("sectionName")) {
+                    author = properties.getString("sectionName");
+                }
+                String weburl = "";
+                if (properties.has("webUrl")) {
+                    weburl = properties.getString("webUrl");
+                }
+
+                News enews = new News(title, author, weburl);
+                news.add(enews);
+            }
             return news;
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Problem parsing the news JSON results", e);
